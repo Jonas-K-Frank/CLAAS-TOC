@@ -1,7 +1,11 @@
+// src/App.jsx
+import React from "react";
 import TCOCalculator from "./TCOCalculator";
 
-function App() {
-	return <TCOCalculator />;
+export default function App() {
+	return (
+		<div style={{ padding: "2rem" }}>
+			<TCOCalculator />
+		</div>
+	);
 }
-
-export default App;

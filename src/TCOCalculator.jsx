@@ -1,30 +1,28 @@
-import { useState, useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React, { useState, useMemo } from "react";
+import Card, { CardContent } from "./components/ui/card";
+import { Button } from "./components/ui/button";
+import FormField from "./components/ui/FormField";
+import Input from "./components/ui/input";
 
 export default function TCOCalculator() {
 	const [data, setData] = useState({
-		purchasePrice: 1500000,
-		interestRate: 4, // % pr. år
-		years: 5,
-		hoursPerYear: 900,
-		fuelConsumption: 22, // liter/time
-		fuelPrice: 10, // DKK/l
-		servicePerYear: 35000,
-		insurancePerYear: 12000,
-		resalePercent: 35, // % af købspris
+		purchasePrice: "",
+		interestRate: "",
+		years: "",
+		hoursPerYear: "",
+		fuelConsumption: "",
+		fuelPrice: "",
+		servicePerYear: "",
+		insurancePerYear: "",
+		resalePercent: "",
 	});
 
-	// Ensartet handler der bruger valueAsNumber så man kan skrive frit i feltet
 	const handleChange = (field) => (e) => {
 		const val = e.target.value;
-		// Tillad tomt felt – brugeren sletter for at skrive nyt
-		if (val === "") {
-			setData({ ...data, [field]: "" });
-			return;
-		}
-		setData({ ...data, [field]: e.target.valueAsNumber });
+		setData((prev) => ({
+			...prev,
+			[field]: val === "" ? "" : e.target.valueAsNumber,
+		}));
 	};
 
 	const result = useMemo(() => {
@@ -40,9 +38,20 @@ export default function TCOCalculator() {
 			resalePercent,
 		} = data;
 
-		// Simpelt input‑guard – hvis ét felt er tomt, returner 0
-		if (Object.values(data).some((v) => v === "" || isNaN(v))) {
-			return { totalCost: 0, costPerHour: 0 };
+		if (
+			[
+				purchasePrice,
+				interestRate,
+				years,
+				hoursPerYear,
+				fuelConsumption,
+				fuelPrice,
+				servicePerYear,
+				insurancePerYear,
+				resalePercent,
+			].some((v) => v === "" || isNaN(v))
+		) {
+			return null;
 		}
 
 		const financingCost = purchasePrice * (interestRate / 100) * years;
@@ -80,43 +89,51 @@ export default function TCOCalculator() {
 	];
 
 	return (
-		<div className="container mx-auto p-4 max-w-3xl">
-			<h1 className="text-3xl font-bold mb-6">CLAAS TCO‑kalkulator</h1>
-
-			<Card className="mb-6 p-6 space-y-6">
+		<form onSubmit={(e) => e.preventDefault()} className="space-y-8">
+			<Card className="bg-white rounded-lg shadow p-6">
 				<CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{fields.map(({ label, field, step }) => (
-						<div key={field} className="flex flex-col space-y-1">
-							<Label htmlFor={field}>{label}</Label>
+						<FormField key={field} label={label}>
 							<Input
 								id={field}
 								type="number"
 								step={step}
-								value={data[field] === "" ? "" : data[field]}
+								value={data[field]}
 								onChange={handleChange(field)}
+								className="w-full"
 							/>
-						</div>
+						</FormField>
 					))}
 				</CardContent>
+				<div className="pt-4">
+					<Button
+						type="submit"
+						className="bg-green-700 hover:bg-green-800 text-white font-medium rounded transition px-6 py-2"
+					>
+						Beregn
+					</Button>
+				</div>
 			</Card>
 
-			<Card className="p-6">
-				<CardContent className="space-y-3">
-					<h2 className="text-2xl font-semibold">Resultat</h2>
-					<p className="text-lg">
-						Samlet TCO:{" "}
-						<span className="font-bold">
-							{result.totalCost.toLocaleString()} DKK
-						</span>
-					</p>
-					<p className="text-lg">
-						Pris pr. driftstime:{" "}
-						<span className="font-bold">
-							{result.costPerHour.toLocaleString()} DKK
-						</span>
-					</p>
-				</CardContent>
-			</Card>
-		</div>
+			{result && (
+				<Card className="bg-white rounded-lg shadow p-6">
+					<CardContent>
+						<h2 className="text-2xl font-semibold mb-4">Resultat</h2>
+						<p className="mb-2">
+							<span className="font-medium">Samlet TCO:</span>{" "}
+							<span className="font-bold">
+								{result.totalCost.toLocaleString()} DKK
+							</span>
+						</p>
+						<p>
+							<span className="font-medium">Pris pr. driftstime:</span>{" "}
+							<span className="font-bold">
+								{result.costPerHour.toLocaleString()} DKK
+							</span>
+						</p>
+					</CardContent>
+				</Card>
+			)}
+		</form>
 	);
 }
